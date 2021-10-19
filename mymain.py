@@ -185,7 +185,8 @@ if(__name__=="__main__"):
             # if step%10000 == 9999:
                 
             if step%10000 == 9999: 
-               
+                #save the model every 10000 steps
+                torch.save(net, '\model.pkl')
                 test_loss,test_acc = eval(net,test_data)
                 testlosses.append(float(test_loss))
                 test_accs.append(float(test_acc))
@@ -195,6 +196,8 @@ if(__name__=="__main__"):
         testlosses.append(float(test_loss))
         test_accs.append(float(test_acc))
         print("eval_loss: %.3f  eval_acc: %.3f" % (test_loss,test_acc))
+        torch.save(net, '\model.pkl')
+    torch.save(net, '\model.pkl')
     plt.plot(trainlosses)
     plt.savefig('train_loss.png')
     plt.show()
