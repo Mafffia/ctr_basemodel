@@ -103,9 +103,9 @@ if(__name__=="__main__"):
     net = Net(user_count, item_count, cate_count, cate_list,user_dim, item_dim, cate_dim,
                        [80,40,2]).to(device)
     print(net)
-    optimizer = optim.SGD(net.parameters(), lr=0.05, momentum=0.9)
-    # optimizer = optim.Adam(net.parameters(), lr=0.1)
-    for epoch in range(5):
+    optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.0)
+    # optimizer = optim.Adam(net.parameters(), lr=0.01,weight_decay=1.0)
+    for epoch in range(10):
         running_loss = 0.0
         running_acc = 0.0
         for step, (u, i, y, hist_i, sl) in enumerate(train_data, start=1):
@@ -185,8 +185,7 @@ if(__name__=="__main__"):
             # if step%10000 == 9999:
                 
             if step%10000 == 9999: 
-                #save the model every 10000 steps
-                torch.save(net, '\model.pkl')
+               
                 test_loss,test_acc = eval(net,test_data)
                 testlosses.append(float(test_loss))
                 test_accs.append(float(test_acc))
@@ -196,8 +195,6 @@ if(__name__=="__main__"):
         testlosses.append(float(test_loss))
         test_accs.append(float(test_acc))
         print("eval_loss: %.3f  eval_acc: %.3f" % (test_loss,test_acc))
-        torch.save(net, '\model.pkl')
-    torch.save(net, '\model.pkl')
     plt.plot(trainlosses)
     plt.savefig('train_loss.png')
     plt.show()
