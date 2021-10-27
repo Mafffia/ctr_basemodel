@@ -27,7 +27,7 @@ def same(a,b,c,d):
 #     parser.add_argument('--cate_dim', default=64, help='dimension of category', type=int)
 
 #     parser.add_argument('--dim_layers', default=[80,40,2], type=int)
-def eval(model, test_data):
+def eval(net, test_data):
     losssum = 0.0
     accsum = 0.0
     step = 0
@@ -66,17 +66,13 @@ def eval(model, test_data):
             # test_y=test_y.squeeze(1).to(device)
             out_y = torch.cat([out_positive,out_negative],0).to(device)
 
-            acc = 0.0
-            total = 0.0
-            for zz in range(out_y.shape[0]):
-                total+=1
-                flag = 0
-                if(float(out_y[zz][0]) < float(out_y[zz][1])):
-                    flag = 1
-                if(int(test_y[zz]) == flag):
-                    acc +=1
+            _,pred = torch.max(out_y,axis=1)
+
+            acc = torch.sum(test_y==pred).to(device) / out_y.shape[0]
+
             
-            acc/=total
+            
+            acc
             # print(out_y.shape)
             loss = criterion(out_y.to(device),test_y.to(device))
             
@@ -112,20 +108,14 @@ if(__name__=="__main__"):
             
             if(u.shape[0]<train_batch_size):
                 continue
-            his_hot = torch.zeros(train_batch_size,item_count)
-            for ii in range(hist_i.size()[0]):
-                for j in range(len(hist_i[ii])):
-                    # print(int(hist_i[ii][j]),end='')
-
-                    his_hot[ii][int(hist_i[ii][j])] = 1
-               
+          
             # print("hot:")
             # print(his_hot.shape)
             optimizer.zero_grad()
             out = net(u.long().to(device),i.long().to(device),hist_i.long().to(device),sl)
             # print(out)
             # print(out.shape)
-            train_y = torch.randint(1,10,(train_batch_size,1))
+            train_y = torch.randint(1,10,(train_batch_size,1)).to(device)
             for i in range(train_batch_size):
                 if(int(y[i])==1):
                     train_y[i][0] = 1
@@ -136,7 +126,7 @@ if(__name__=="__main__"):
                 # else:
                 #     out[i] = 0
             
-            train_y = train_y.squeeze(1) .to(device)
+            train_y = train_y.squeeze(1).to(device)
             # # out = out.squeeze(1) 
             
             # print(out)
@@ -145,17 +135,11 @@ if(__name__=="__main__"):
             # print(train_y.shape)
 
             loss = criterion(out.to(device),train_y.to(device))
-            acc = 0.0
-            total = 0.0
-            for zz in range(out.shape[0]):
-                total+=1
-                flag = 0
-                if(float(out[zz][0]) < float(out[zz][1])):
-                    flag = 1
-                if(int(train_y[zz]) == flag):
-                    acc +=1
-            acc/=total
-            accs.append(acc)
+            _,pred = torch.max(out,axis=1)
+            pred.to(device)
+
+            acc = torch.sum(train_y==pred).to(device) / out.shape[0]
+            accs.append(acc.item())
             # print(loss)
             trainlosses.append(float(loss))
             loss.backward()
@@ -183,20 +167,20 @@ if(__name__=="__main__"):
 
 
             # if step%10000 == 9999:
-                
-            if step%10000 == 9999: 
-               
+            if step%10000 == 9999:
                 test_loss,test_acc = eval(net,test_data)
                 testlosses.append(float(test_loss))
                 test_accs.append(float(test_acc))
                 print("eval_loss: %.3f eval_acc: %.3f" % (test_loss,test_acc))
-                torch.save(net, '\model.pkl')
+                
+           
         test_loss,test_acc = eval(net,test_data)
         testlosses.append(float(test_loss))
         test_accs.append(float(test_acc))
         print("eval_loss: %.3f  eval_acc: %.3f" % (test_loss,test_acc))
-        torch.save(net, '\model.pkl')
-    torch.save(net, '\model.pkl')
+        modelstr = '\model_epoch_%d.pkl'%(epoch+1)
+        torch.save(net, modelstr)
+   
     plt.plot(trainlosses)
     plt.savefig('train_loss.png')
     plt.show()
